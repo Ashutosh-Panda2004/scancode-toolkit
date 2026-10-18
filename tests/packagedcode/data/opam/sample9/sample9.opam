@@ -1,0 +1,7 @@
+opam-version: "2.0"
+maintainer: "Jane Dev <jane@example.com>"
+authors: "Jane Dev"
+homepage: "https://example.com/testpkg"
+license: "MIT"
+synopsis: "A test package with a single line dependency list"
+depends: ["ocaml" {>= "4.08"} "dune" {>= "2.0"} "lwt" {>= "5.0"}]

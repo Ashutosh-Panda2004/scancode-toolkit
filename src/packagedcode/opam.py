@@ -147,6 +147,16 @@ parse_dep = re.compile(
     r'(?P<version>(.*))'
 ).match
 
+# Match a single dependency entry in a depends list: a quoted package
+# name optionally followed by a version filter in curly braces. Used
+# with finditer to collect every entry of a list, including several
+# entries written on a single line.
+parse_deps = re.compile(
+    r'\"(?P<name>[A-z0-9\-]*)\"'
+    r'\s*'
+    r'(?P<version>\{[^{}]*\})?'
+).finditer
+
 def _test_parse():
     """
     Example::
@@ -214,19 +224,26 @@ def parse_opam_from_text(text):
                 value = clean_data(value)
             value = value.split('" "')
             opam_data[key] = value
-        elif key == 'depends':  # Get multiline dependencies
+        elif key == 'depends':  # Get dependencies
             value = []
-            for dep in lines[i + 1:]:
-                if ']' in dep:
+            # The dependency list may start on the depends line itself
+            # and spans lines until the closing bracket: collect all
+            # of its text first, then parse each entry from it, so
+            # that single line lists are not dropped.
+            dep_lines = [parsed_line.group('value')]
+            for cont in lines[i + 1:]:
+                dep_lines.append(cont)
+                if ']' in cont:
                     break
-                parsed_dep = parse_dep(dep)
-                if parsed_dep:
-                    version = parsed_dep.group('version').strip('{ } ').replace('"', '')
-                    name = parsed_dep.group('name').strip()
-                    value.append(dict(
-                        purl=PackageURL(type='opam', name=name).to_string(),
-                        version=version,
-                    ))
+            dep_text = '\n'.join(dep_lines).split(']', 1)[0]
+            for parsed_dep in parse_deps(dep_text):
+                version = parsed_dep.group('version') or ''
+                version = version.strip('{ } ').replace('"', '')
+                name = parsed_dep.group('name').strip()
+                value.append(dict(
+                    purl=PackageURL(type='opam', name=name).to_string(),
+                    version=version,
+                ))
             opam_data[key] = value
 
         elif key == 'src':  # Get multiline src

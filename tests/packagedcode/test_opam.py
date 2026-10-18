@@ -71,6 +71,13 @@ class TestOcaml(PackageTester):
         packages = opam.OpamFileHandler.parse(test_file)
         self.check_packages_data(packages, expected_loc, regen=REGEN_TEST_FIXTURES)
 
+    def test_parse_sample9(self):
+        # the dependencies of this sample are written on a single line
+        test_file = self.get_test_loc('opam/sample9/sample9.opam')
+        expected_loc = self.get_test_loc('opam/sample9/output.opam.expected')
+        packages = opam.OpamFileHandler.parse(test_file)
+        self.check_packages_data(packages, expected_loc, regen=REGEN_TEST_FIXTURES)
+
 
 FILE_LINE = [
     ('authors: "BAP Team"', ('authors', '"BAP Team"')),
