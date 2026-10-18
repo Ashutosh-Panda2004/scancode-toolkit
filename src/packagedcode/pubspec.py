@@ -208,12 +208,25 @@ def build_dep(name, version, scope, is_runtime=True, is_optional=False):
     # TODO: these can be more complex for SDKs
     # https://dart.dev/tools/pub/dependencies#dependency-sources
 
-    if isinstance(version, dict) and 'sdk' in version:
-        # {'sdk': 'flutter'} type of deps....
-        # which is a wart that we keep as a requiremnet
-        version = ', '.join(': '.join([k, str(v)]) for k, v in version.items())
+    extracted_requirement = version
+    if isinstance(version, dict):
+        # A dependency can also be declared with a mapping: an SDK
+        # dependency such as {sdk: flutter}, a hosted dependency that
+        # carries its own "version" key, or a path or git dependency
+        # without any version. Keep the flattened mapping as the
+        # extracted requirement and use the "version" entry, if any,
+        # as the version for the pinned check.
+        extracted_requirement = ', '.join(
+            ': '.join([k, str(v)]) for k, v in version.items()
+        )
+        if 'sdk' in version:
+            # {'sdk': 'flutter'} type of deps....
+            # which is a wart that we keep as a requiremnet
+            version = extracted_requirement
+        else:
+            version = version.get('version')
 
-    if version.replace('.', '').isdigit():
+    if version and version.replace('.', '').isdigit():
         # version is pinned exactly if it is only made of dots and digits
         purl = PackageURL(
             type='pubspec',
@@ -230,7 +243,7 @@ def build_dep(name, version, scope, is_runtime=True, is_optional=False):
 
     dep = models.DependentPackage(
         purl=purl.to_string(),
-        extracted_requirement=version,
+        extracted_requirement=extracted_requirement,
         scope=scope,
         is_runtime=is_runtime,
         is_optional=is_optional,

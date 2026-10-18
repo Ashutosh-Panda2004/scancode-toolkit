@@ -35,6 +35,41 @@ class TestPubspecDatadriven(PackageTester):
         self.check_packages_data(package_data, expected_loc, regen=REGEN_TEST_FIXTURES)
 
 
+def test_build_dep_with_mapping_dependencies():
+    # a path dependency has no version and is not pinned
+    dep = pubspec.build_dep(
+        'my_local_lib', {'path': '../my_local_lib'}, scope='dependencies'
+    )
+    assert dep.purl == 'pkg:pubspec/my_local_lib'
+    assert dep.extracted_requirement == 'path: ../my_local_lib'
+    assert not dep.is_pinned
+
+    # a git dependency has no version either
+    dep = pubspec.build_dep(
+        'some_git_pkg',
+        {'git': {'url': 'https://github.com/example/some_git_pkg.git', 'ref': 'abc123'}},
+        scope='dependencies',
+    )
+    assert dep.purl == 'pkg:pubspec/some_git_pkg'
+    assert not dep.is_pinned
+
+    # a hosted dependency uses its own "version" entry as the requirement
+    dep = pubspec.build_dep(
+        'hosted_pkg',
+        {'hosted': {'name': 'hosted_pkg', 'url': 'https://my-pub-server.example.com'},
+         'version': '2.0.0'},
+        scope='dependencies',
+    )
+    assert dep.purl == 'pkg:pubspec/hosted_pkg@2.0.0'
+    assert dep.is_pinned
+
+    # an SDK dependency keeps its flattened mapping as the requirement
+    dep = pubspec.build_dep('flutter', {'sdk': 'flutter'}, scope='dependencies')
+    assert dep.purl == 'pkg:pubspec/flutter'
+    assert dep.extracted_requirement == 'sdk: flutter'
+    assert not dep.is_pinned
+
+
 def pub_tester(location,):
     manifests = []
     for package_data in pubspec.DartPubspecYamlHandler.parse(location):

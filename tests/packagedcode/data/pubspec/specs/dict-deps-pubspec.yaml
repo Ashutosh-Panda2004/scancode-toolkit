@@ -1,0 +1,19 @@
+name: myapp
+version: 1.0.0
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+dependencies:
+  http: ^1.2.0
+  my_local_lib:
+    path: ../my_local_lib
+  some_git_pkg:
+    git:
+      url: https://github.com/example/some_git_pkg.git
+      ref: abc123
+  hosted_pkg:
+    hosted:
+      name: hosted_pkg
+      url: https://my-pub-server.example.com
+    version: ^2.0.0
+  flutter:
+    sdk: flutter
