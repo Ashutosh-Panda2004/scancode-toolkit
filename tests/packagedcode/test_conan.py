@@ -48,6 +48,35 @@ class TestConanHandler(PackageTester):
         packages = conan.ConanFileHandler.parse(test_file)
         self.check_packages_data(packages, expected_loc, regen=REGEN_TEST_FIXTURES)
 
+    def test_parse_for_attribute_base_conanfile(self):
+        test_file = self.get_test_loc("conan/attribute-base/conanfile.py")
+        expected_loc = self.get_test_loc(
+            "conan/attribute-base/conanfile.py-expected.json"
+        )
+        packages = conan.ConanFileHandler.parse(test_file)
+        self.check_packages_data(packages, expected_loc, regen=REGEN_TEST_FIXTURES)
+
+    def test_parse_for_mixin_first_conanfile(self):
+        test_file = self.get_test_loc("conan/mixin-first/conanfile.py")
+        expected_loc = self.get_test_loc(
+            "conan/mixin-first/conanfile.py-expected.json"
+        )
+        packages = conan.ConanFileHandler.parse(test_file)
+        self.check_packages_data(packages, expected_loc, regen=REGEN_TEST_FIXTURES)
+
+    def test_parse_for_versionless_requires_conanfile(self):
+        test_file = self.get_test_loc("conan/versionless-requires/conanfile.py")
+        expected_loc = self.get_test_loc(
+            "conan/versionless-requires/conanfile.py-expected.json"
+        )
+        packages = conan.ConanFileHandler.parse(test_file)
+        self.check_packages_data(packages, expected_loc, regen=REGEN_TEST_FIXTURES)
+
+    def test_parse_conanfile_without_recipe_class(self):
+        # a python file without a ConanFile recipe class has no package data
+        results = conan.ConanFileHandler._parse("class SomethingElse:\n    pass\n")
+        assert results is None
+
     def test_parse_for_boost_conandata(self):
         test_file = self.get_test_loc("conan/recipes/boost/manifest/conandata.yml")
         expected_loc = self.get_test_loc(
@@ -204,3 +233,19 @@ def test_get_dependencies():
     ]
 
     assert conan.get_dependencies(requires) == expected
+
+
+def test_get_dependencies_with_versionless_requirement():
+    # A requirement without a version is an unpinned bare package name.
+    expected = [
+        models.DependentPackage(
+            purl="pkg:conan/zlib",
+            scope="install",
+            is_runtime=True,
+            is_optional=False,
+            is_pinned=False,
+            extracted_requirement=None,
+        ),
+    ]
+
+    assert conan.get_dependencies(["zlib"]) == expected

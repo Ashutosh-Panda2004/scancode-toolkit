@@ -131,12 +131,25 @@ class ConanFileHandler(models.DatafileHandler):
                     node
                     for node in tree.body
                     if isinstance(node, ast.ClassDef)
-                    and node.bases
-                    and isinstance(node.bases[0], ast.Name)
-                    and node.bases[0].id == "ConanFile"
+                    and any(
+                        (
+                            isinstance(base, ast.Name)
+                            and base.id == "ConanFile"
+                        )
+                        or (
+                            isinstance(base, ast.Attribute)
+                            and base.attr == "ConanFile"
+                        )
+                        for base in node.bases
+                    )
                 ),
                 None,
             )
+
+            if recipe_class_def is None:
+                # This file has no conan recipe class: there is no
+                # package data to collect from it.
+                return
 
             parser = ConanFileParser()
             parser.visit(recipe_class_def)
@@ -281,8 +294,14 @@ def is_constraint_pinned(constraint):
 def get_dependencies(requires):
     dependent_packages = []
     for req in requires:
-        name, constraint = req.split("/", 1)
-        is_pinned = is_constraint_pinned(constraint)
+        if "/" in req:
+            name, constraint = req.split("/", 1)
+            is_pinned = is_constraint_pinned(constraint)
+        else:
+            # A requirement without a version, such as "zlib", is an
+            # unpinned requirement on the bare package name.
+            name, constraint = req, None
+            is_pinned = False
         version = None
         if is_pinned:
             version = constraint
