@@ -1,0 +1,19 @@
+PODS:
+  - AFNetworking (3.2.1)
+  - Masonry (1.1.2)
+
+DEPENDENCIES:
+  - Masonry
+
+SPEC REPOS:
+  trunk:
+    - AFNetworking
+    - Masonry
+
+SPEC CHECKSUMS:
+  AFNetworking: bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222
+  Masonry: cccc3333cccc3333cccc3333cccc3333cccc3333
+
+PODFILE CHECKSUM: 2222222222222222222222222222222222222222
+
+COCOAPODS: 1.10.1

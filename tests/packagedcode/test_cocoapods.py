@@ -160,6 +160,38 @@ class TestCocoaPodfileLock(PackageTester):
         packages = PodfileLockHandler.parse(test_file)
         self.check_packages_data(packages, expected_loc, regen=REGEN_TEST_FIXTURES)
 
+    def test_cocoapods_podfile_lock_parsing_does_not_leak_state(self):
+        # Parsing several Podfile.lock files in the same process must not
+        # leak the data of a lockfile into the next lockfiles.
+        first_file = self.get_test_loc(
+            'cocoapods/podfile.lock/state_leak_first_Podfile.lock'
+        )
+        second_file = self.get_test_loc(
+            'cocoapods/podfile.lock/state_leak_second_Podfile.lock'
+        )
+        third_file = self.get_test_loc(
+            'cocoapods/podfile.lock/state_leak_third_Podfile.lock'
+        )
+
+        # parse the first file: its data must not affect the next files
+        list(PodfileLockHandler.parse(first_file))
+
+        second_packages = list(PodfileLockHandler.parse(second_file))
+        second_deps = {d.purl: d for d in second_packages[0].dependencies}
+        afnetworking = second_deps['pkg:cocoapods/AFNetworking@3.2.1']
+        # AFNetworking is only a transitive dependency of the second file
+        assert not afnetworking.is_direct
+        # and it carries the checksum of the second file
+        assert afnetworking.resolved_package.sha1 == (
+            'bbbb2222bbbb2222bbbb2222bbbb2222bbbb2222'
+        )
+
+        third_packages = list(PodfileLockHandler.parse(third_file))
+        third_deps = {d.purl: d for d in third_packages[0].dependencies}
+        afnetworking = third_deps['pkg:cocoapods/AFNetworking@3.2.1']
+        # the third file has no SPEC CHECKSUMS section at all
+        assert afnetworking.resolved_package.sha1 is None
+
 
 class TestCocoapodsEndToEndAssemble(PackageTester):
     test_data_dir = os.path.join(os.path.dirname(__file__), 'data')
