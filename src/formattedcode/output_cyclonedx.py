@@ -376,7 +376,7 @@ class CycloneDxComponent:
             self.author = other.author
 
         if not self.copyright:
-            self.copyright = other.author
+            self.copyright = other.copyright
 
         if not self.description:
             self.description = other.description
@@ -398,7 +398,7 @@ class CycloneDxComponent:
 
         if not self.properties:
             self.properties = other.properties
-        elif not other.properties:
+        elif other.properties:
             merge_lists(self.properties, other.properties)
 
     def to_xml_element(self):

@@ -21,6 +21,7 @@ from formattedcode.output_cyclonedx import CycloneDxExternalRef
 from formattedcode.output_cyclonedx import CycloneDxHashObject
 from formattedcode.output_cyclonedx import CycloneDxLicenseExpression
 from formattedcode.output_cyclonedx import CycloneDxMetadata
+from formattedcode.output_cyclonedx import CycloneDxProperty
 from formattedcode.output_cyclonedx import get_author_from_parties
 from scancode.cli_test_utils import run_scan_click
 from scancode_config import REGEN_TEST_FIXTURES
@@ -128,6 +129,33 @@ def test_can_encode_component():
         'version': '1',
     }
     assert component.to_dict() == expected
+
+
+def test_merge_component_takes_copyright_and_merges_properties():
+    component = CycloneDxComponent(
+        name='test',
+        version='1',
+        properties=[CycloneDxProperty(name='prop-a', value='1')],
+    )
+    other = CycloneDxComponent(
+        name='test',
+        version='1',
+        author='Jane Dev',
+        copyright='Copyright Jane Dev',
+        properties=[CycloneDxProperty(name='prop-b', value='2')],
+    )
+
+    component.merge(other)
+
+    # the copyright of the other component is kept as is and is not
+    # replaced by its author
+    assert component.copyright == 'Copyright Jane Dev'
+    assert component.author == 'Jane Dev'
+    # the properties of both components are kept
+    assert component.properties == [
+        CycloneDxProperty(name='prop-a', value='1'),
+        CycloneDxProperty(name='prop-b', value='2'),
+    ]
 
 
 def test_get_author_from_parties():
