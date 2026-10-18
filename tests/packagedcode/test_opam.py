@@ -124,3 +124,9 @@ class TestFunction(object):
     def test_parse_file_line(self, line, expected_data):
         stripped_line = opam.clean_data(line)
         assert stripped_line == expected_data
+
+    def test_get_repository_homepage_url(self):
+        assert opam.get_repository_homepage_url('dune') == (
+            'https://opam.ocaml.org/packages/dune'
+        )
+        assert opam.get_repository_homepage_url(None) is None

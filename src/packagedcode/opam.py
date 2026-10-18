@@ -119,7 +119,7 @@ class OpamFileHandler(models.DatafileHandler):
 
 
 def get_repository_homepage_url(name):
-    return name and '{https://opam.ocaml.org/packages}/{name}'
+    return name and f'https://opam.ocaml.org/packages/{name}'
 
 
 def get_api_data_url(name, version):
